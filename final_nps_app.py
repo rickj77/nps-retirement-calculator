@@ -20,7 +20,10 @@ def format_inr(amount):
     return f"₹{','.join(parts)},{last_three}"
 
 def parse_month_year(mm_yy):
-    return datetime.strptime(f"01/{mm_yy}", "%d/%m/%y")
+    try:
+        return datetime.strptime(f"01/{mm_yy}", "%d/%m/%y")
+    except ValueError:
+        return datetime.strptime(f"01/{mm_yy}", "%d/%m/%Y")
 
 st.title("🎉 Central Govt NPS Retirement Calculator 🎉")
 
@@ -34,8 +37,8 @@ with st.form("nps_form"):
         half_yearly_da_increase_percent = st.number_input("Half-Yearly DA Increase (%):", min_value=0.0)
         annual_basic_increment_percent = st.number_input("Annual Basic Salary Increment (%):", min_value=0.0)
     with col2:
-        start_mm_yy = st.text_input("Start Month/Year (MM-YY):")
-        end_mm_yy = st.text_input("End Month/Year (MM-YY):")
+        start_mm_yy = st.text_input("Start Month/Year (MM/YY):")
+        end_mm_yy = st.text_input("End Month/Year (MM/YY):")
         leave_days = st.number_input("Earned Leave Days (max 300):", min_value=0, max_value=300)
         years_of_service = st.number_input("Completed Years of Service:", min_value=0)
         vrs = st.radio("Voluntary Retirement Taken?", ["No", "Yes"])
@@ -153,7 +156,7 @@ if submitted:
     st.markdown(f"**🔹 Leave Encashment:** {format_inr(leave_encashment)}")
     st.markdown(f"**🔹 Annuity Pension:** {format_inr(monthly_pension)}")
     st.markdown(f"**💰 Total Lump Sum:** {format_inr(nps_lump_sum + gratuity + leave_encashment)}")
-    st.markdown(f"**📆 Pension Per Month:** {format_inr(monthly_pension)}")
+    st.markdown(f"**🗖️ Pension Per Month:** {format_inr(monthly_pension)}")
 
     st.subheader("🟢 Tax-Free Components")
     st.dataframe(pd.DataFrame([
@@ -162,5 +165,5 @@ if submitted:
         ["Leave Encashment (up to 300 days)", "Exempt under Section 10(10AA)(i)"]
     ], columns=["Component", "Income Tax Exemption"]), use_container_width=True)
 
-    with st.expander("🗖️ Month-wise Salary Table"):
+    with st.expander("🗶️ Month-wise Salary Table"):
         st.dataframe(pd.DataFrame(monthwise_table, columns=["Month", "Basic Pay", "DA", "DA %", "Emp NPS", "Govt NPS", "Total NPS"]), use_container_width=True)
