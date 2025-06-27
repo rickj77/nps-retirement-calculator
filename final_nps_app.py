@@ -2,6 +2,7 @@ import streamlit as st
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from io import StringIO
+from tabulate import tabulate
 
 # Pay Band mapping
 PAY_BANDS = {
@@ -60,11 +61,15 @@ with st.form("nps_form"):
         pay_comm_mm_yy = st.text_input("8th Pay Commission Effective Month/Year (MM/YY)", "01/29")
         new_half_yearly_da_increase_percent = st.number_input("DA Increase after 8th PC (%)", value=3.0)
 
+    # Promotions appear AFTER CPC
     num_promotions = st.number_input("How many promotions?", step=1, min_value=0, max_value=5)
     promotions = []
     for i in range(num_promotions):
-        promo_mm_yy = st.text_input(f"Promotion {i+1} Month/Year (MM/YY)", key=f"promo_date_{i}")
-        pay_band = st.selectbox(f"Pay Band for Promotion {i+1}", options=list(PAY_BANDS.keys()), key=f"band_{i}")
+        col1, col2 = st.columns([2, 2])
+        with col1:
+            promo_mm_yy = st.text_input(f"Promotion {i+1} Date (MM/YY)", key=f"promo_date_{i}")
+        with col2:
+            pay_band = st.selectbox(f"Pay Band for Promotion {i+1}", options=list(PAY_BANDS.keys()), key=f"band_{i}")
         promotions.append((promo_mm_yy, pay_band))
 
     submitted = st.form_submit_button("Calculate")
@@ -170,7 +175,6 @@ if submitted:
 
             current_date += relativedelta(months=1)
 
-        # Final Row
         monthwise_table.append(["Total", "", "", "", format_inr(emp_total), format_inr(govt_total), format_inr(nps_total)])
 
         # Final Benefits
@@ -201,13 +205,17 @@ if submitted:
         log("Gratuity: Section 10(10)(iii)")
         log("Leave Encashment: Section 10(10AA)(i)")
 
-        from tabulate import tabulate
         log("\n📆 Month-wise Salary Table:")
-        log(tabulate(monthwise_table, headers=["Month", "Basic Pay", "DA", "DA %", "Emp NPS", "Govt NPS", "Total NPS"], tablefmt="grid"))
+        tabulated_text = tabulate(
+            monthwise_table,
+            headers=["Month", "Basic Pay", "DA", "DA %", "Emp NPS", "Govt NPS", "Total NPS"],
+            tablefmt="fancy_grid",
+            colalign=("center", "left", "right", "center", "right", "right", "right")
+        )
+        log(tabulated_text)
 
-        # Show result and download button
         result_text = output.getvalue()
-        st.text(result_text)
+        st.code(result_text)  # Use monospaced formatting
         st.download_button(
             label="📥 Download Result as .txt",
             data=result_text,
