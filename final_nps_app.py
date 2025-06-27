@@ -1,7 +1,6 @@
 import streamlit as st
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import os
 from io import StringIO
 
 # Pay Band mapping
@@ -35,18 +34,7 @@ def parse_month_year(mm_yy):
         raise ValueError(f"Invalid MM/YY format: '{mm_yy}'")
     return datetime.strptime(f"01/{mm_yy}", "%d/%m/%y")
 
-def get_next_result_filename():
-    base_path = "C:\\Users\\Puneet\\Desktop\\python\\results"
-    os.makedirs(base_path, exist_ok=True)
-    i = 1
-    while True:
-        file_path = os.path.join(base_path, f"result_{i}.txt")
-        if not os.path.exists(file_path):
-            return file_path
-        i += 1
-
 st.set_page_config(page_title="NPS Retirement Calculator", layout="wide")
-
 st.markdown("<h1 style='text-align:center;'>🌸🎉 HAPPY RETIREMENT 🎉🌸</h1>", unsafe_allow_html=True)
 st.markdown("##### 📝 Special Note: Fitment Factor of 2.5x has been assumed for 8th CPC")
 
@@ -67,7 +55,6 @@ with st.form("nps_form"):
     pay_comm_due = st.radio("8th Pay Commission Due?", ['y', 'n']) == 'y'
     pay_comm_date = None
     new_half_yearly_da_increase_percent = 0
-    pay_comm_mm_yy = ""
 
     if pay_comm_due:
         pay_comm_mm_yy = st.text_input("8th Pay Commission Effective Month/Year (MM/YY)", "01/29")
@@ -144,7 +131,7 @@ if submitted:
                 july_da_applied = True
                 change_note += " [DA↑]"
 
-            if current_date.month == 7 and current_date != start_date:
+            if current_date.month == 7 and current_date != start_date and not change_note.endswith("[8th PC]"):
                 basic_salary += basic_salary * (annual_basic_increment_percent / 100)
                 change_note += " [Increment]"
 
@@ -214,19 +201,19 @@ if submitted:
         log("Gratuity: Section 10(10)(iii)")
         log("Leave Encashment: Section 10(10AA)(i)")
 
-        # Month Table
         from tabulate import tabulate
         log("\n📆 Month-wise Salary Table:")
         log(tabulate(monthwise_table, headers=["Month", "Basic Pay", "DA", "DA %", "Emp NPS", "Govt NPS", "Total NPS"], tablefmt="grid"))
 
-        # Save
-        file_path = get_next_result_filename()
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(output.getvalue())
-        st.success(f"✅ Results saved to {file_path}")
-
-        # Display
-        st.text(output.getvalue())
+        # Show result and download button
+        result_text = output.getvalue()
+        st.text(result_text)
+        st.download_button(
+            label="📥 Download Result as .txt",
+            data=result_text,
+            file_name="nps_retirement_result.txt",
+            mime="text/plain"
+        )
 
     except Exception as e:
         st.error(f"Error: {e}")
