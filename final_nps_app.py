@@ -40,20 +40,18 @@ st.markdown("<h1 style='text-align:center;'>🌸🎉 HAPPY RETIREMENT 🎉🌸</
 st.markdown("##### 📝 Special Note: Fitment Factor of 2.5x has been assumed for 8th CPC")
 
 with st.form("nps_form"):
-    basic_salary = st.number_input("Enter Basic Salary", step=1000.0, value=0.0, format="%.0f")
-    da_amount = st.number_input("Current DA Amount", step=500.0, value=0.0, format="%.0f")
-    nps_corpus = st.number_input("Current NPS Corpus", step=10000.0, value=0.0, format="%.0f")
-    nps_growth_rate = st.number_input("Expected NPS Growth Rate (%)", value=10.0, format="%.2f")
-    half_yearly_da_increase_percent = st.number_input("Half-Yearly DA Increase (%)", value=3.0, format="%.2f")
-    annual_basic_increment_percent = st.number_input("Annual Basic Salary Increment (%)", value=3.0, format="%.2f")
+    basic_salary = st.number_input("Enter Basic Salary", step=1000.0, value=None, format="%.0f")
+    da_amount = st.number_input("Current DA Amount", step=500.0, value=None, format="%.0f")
+    nps_corpus = st.number_input("Current NPS Corpus", step=10000.0, value=None, format="%.0f")
+    nps_growth_rate = st.number_input("Expected NPS Growth Rate (%)", value=None, format="%.2f")
+    half_yearly_da_increase_percent = st.number_input("Half-Yearly DA Increase (%)", value=None, format="%.2f")
+    annual_basic_increment_percent = st.number_input("Annual Basic Salary Increment (%)", value=None, format="%.2f")
     start_mm_yy = st.text_input("Start Month/Year (MM-YY)", "")
     end_mm_yy = st.text_input("End Month/Year (MM-YY)", "")
-    
-    leave_days = int(st.number_input("Earned Leave Days (max 300)", max_value=300.0, step=1.0, value=0.0, format="%.0f"))
-    years_of_service = int(st.number_input("Completed Years of Service", step=1.0, value=0.0, format="%.0f"))
-    
+    leave_days = st.number_input("Earned Leave Days (max 300)", max_value=300.0, step=1.0, value=None, format="%.0f")
+    years_of_service = st.number_input("Completed Years of Service", step=1.0, value=None, format="%.0f")
     vrs = st.radio("Voluntary Retirement Taken?", ['y', 'n'])
-    annuity_rate = st.number_input("Expected Annuity Return Rate (%)", value=6.5, format="%.2f")
+    annuity_rate = st.number_input("Expected Annuity Return Rate (%)", value=None, format="%.2f")
 
     pay_comm_due = st.radio("8th Pay Commission Due?", ['y', 'n']) == 'y'
     pay_comm_date = None
@@ -61,18 +59,18 @@ with st.form("nps_form"):
 
     if pay_comm_due:
         pay_comm_mm_yy = st.text_input("8th Pay Commission Effective Month/Year (MM/YY)", "")
-        new_half_yearly_da_increase_percent = st.number_input("DA Increase after 8th PC (%)", value=3.0, format="%.2f")
+        new_half_yearly_da_increase_percent = st.number_input("DA Increase after 8th PC (%)", value=None, format="%.2f")
 
-    # Promotions after CPC
-    num_promotions = int(st.number_input("How many promotions?", step=1.0, min_value=0.0, max_value=5.0, value=0.0, format="%.0f"))
+    num_promotions = st.number_input("How many promotions?", step=1.0, min_value=0.0, max_value=5.0, value=None, format="%.0f")
     promotions = []
-    for i in range(num_promotions):
-        col1, col2 = st.columns([2, 2])
-        with col1:
-            promo_mm_yy = st.text_input(f"Promotion {i+1} Date (MM/YY)", key=f"promo_date_{i}")
-        with col2:
-            pay_band = st.selectbox(f"Pay Band for Promotion {i+1}", options=list(PAY_BANDS.keys()), key=f"band_{i}")
-        promotions.append((promo_mm_yy, pay_band))
+    if num_promotions:
+        for i in range(int(num_promotions)):
+            col1, col2 = st.columns([2, 2])
+            with col1:
+                promo_mm_yy = st.text_input(f"Promotion {i+1} Date (MM/YY)", key=f"promo_date_{i}")
+            with col2:
+                pay_band = st.selectbox(f"Pay Band for Promotion {i+1}", options=list(PAY_BANDS.keys()), key=f"band_{i}")
+            promotions.append((promo_mm_yy, pay_band))
 
     submitted = st.form_submit_button("Calculate")
 
@@ -82,11 +80,6 @@ if submitted:
         def log(*args):
             print(*args)
             print(*args, file=output)
-
-        log("🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸")
-        log("         🎉 HAPPY RETIREMENT 🎉        ")
-        log("🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸🌸")
-        log("\n📝 Special Note: Fitment Factor of 2.5x has been assumed for 8th CPC\n")
 
         pay_comm_increase_factor = 2.5
         start_date = parse_month_year(start_mm_yy)
@@ -110,7 +103,7 @@ if submitted:
             promo_events.append((promo_date, base_basic))
 
         current_date = start_date
-        current_da_percent = (da_amount / basic_salary) * 100 if basic_salary else 0
+        current_da_percent = (da_amount / basic_salary) * 100
         first_year = start_date.year
         july_da_applied = False
         emp_total = govt_total = nps_total = 0
@@ -174,12 +167,10 @@ if submitted:
                 format_inr(govt_nps),
                 format_inr(total_nps)
             ])
-
             current_date += relativedelta(months=1)
 
         monthwise_table.append(["Total", "", "", "", format_inr(emp_total), format_inr(govt_total), format_inr(nps_total)])
 
-        # Final Benefits
         corpus = nps_corpus
         for year in sorted(yearwise_contribution):
             cont = yearwise_contribution[year]
@@ -203,27 +194,16 @@ if submitted:
         log(f"💰 Total Lump Sum: {format_inr(nps_lump + gratuity + leave_encash)}")
 
         log("\n🟢 Tax-Free Components")
-        log("✅ NPS Lump Sum: Section 10(12A) – Exempt from tax")
-        log("✅ Gratuity: Section 10(10)(iii) – Exempt from tax")
-        log("✅ Leave Encashment: Section 10(10AA)(i) – Exempt from tax")
+        log("✅ NPS Lump Sum: Section 10(12A) — Exempt from tax")
+        log("✅ Gratuity: Section 10(10)(iii) — Exempt from tax")
+        log("✅ Leave Encashment: Section 10(10AA)(i) — Exempt from tax")
 
         log("\n📆 Month-wise Salary Table:")
-        tabulated_text = tabulate(
-            monthwise_table,
-            headers=["Month", "Basic Pay", "DA", "DA %", "Emp NPS", "Govt NPS", "Total NPS"],
-            tablefmt="fancy_grid",
-            colalign=("center", "left", "right", "center", "right", "right", "right")
-        )
-        log(tabulated_text)
+        log(tabulate(monthwise_table, headers=["Month", "Basic Pay", "DA", "DA %", "Emp NPS", "Govt NPS", "Total NPS"], tablefmt="fancy_grid", colalign=("center", "left", "right", "center", "right", "right", "right")))
 
         result_text = output.getvalue()
-        st.code(result_text)  # monospaced display
-        st.download_button(
-            label="📥 Download Result as .txt",
-            data=result_text,
-            file_name="nps_retirement_result.txt",
-            mime="text/plain"
-        )
+        st.code(result_text)
+        st.download_button("📥 Download Result as .txt", data=result_text, file_name="nps_retirement_result.txt", mime="text/plain")
 
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"❌ Error: {e}")
