@@ -40,29 +40,31 @@ st.markdown("<h1 style='text-align:center;'>🌸🎉 HAPPY RETIREMENT 🎉🌸</
 st.markdown("##### 📝 Special Note: Fitment Factor of 2.5x has been assumed for 8th CPC")
 
 with st.form("nps_form"):
-    basic_salary = st.number_input("Enter Basic Salary", step=1000)
-    da_amount = st.number_input("Current DA Amount", step=500)
-    nps_corpus = st.number_input("Current NPS Corpus", step=10000)
-    nps_growth_rate = st.number_input("Expected NPS Growth Rate (%)", value=10.0)
-    half_yearly_da_increase_percent = st.number_input("Half-Yearly DA Increase (%)", value=3.0)
-    annual_basic_increment_percent = st.number_input("Annual Basic Salary Increment (%)", value=3.0)
-    start_mm_yy = st.text_input("Start Month/Year (MM-YY)", "01-25")
-    end_mm_yy = st.text_input("End Month/Year (MM-YY)", "12-35")
-    leave_days = st.number_input("Earned Leave Days (max 300)", max_value=300, step=1)
-    years_of_service = st.number_input("Completed Years of Service", step=1)
+    basic_salary = st.number_input("Enter Basic Salary", step=1000.0, value=0.0, format="%.0f")
+    da_amount = st.number_input("Current DA Amount", step=500.0, value=0.0, format="%.0f")
+    nps_corpus = st.number_input("Current NPS Corpus", step=10000.0, value=0.0, format="%.0f")
+    nps_growth_rate = st.number_input("Expected NPS Growth Rate (%)", value=10.0, format="%.2f")
+    half_yearly_da_increase_percent = st.number_input("Half-Yearly DA Increase (%)", value=3.0, format="%.2f")
+    annual_basic_increment_percent = st.number_input("Annual Basic Salary Increment (%)", value=3.0, format="%.2f")
+    start_mm_yy = st.text_input("Start Month/Year (MM-YY)", "")
+    end_mm_yy = st.text_input("End Month/Year (MM-YY)", "")
+    
+    leave_days = int(st.number_input("Earned Leave Days (max 300)", max_value=300.0, step=1.0, value=0.0, format="%.0f"))
+    years_of_service = int(st.number_input("Completed Years of Service", step=1.0, value=0.0, format="%.0f"))
+    
     vrs = st.radio("Voluntary Retirement Taken?", ['y', 'n'])
-    annuity_rate = st.number_input("Expected Annuity Return Rate (%)", value=6.5)
+    annuity_rate = st.number_input("Expected Annuity Return Rate (%)", value=6.5, format="%.2f")
 
     pay_comm_due = st.radio("8th Pay Commission Due?", ['y', 'n']) == 'y'
     pay_comm_date = None
     new_half_yearly_da_increase_percent = 0
 
     if pay_comm_due:
-        pay_comm_mm_yy = st.text_input("8th Pay Commission Effective Month/Year (MM/YY)", "01/29")
-        new_half_yearly_da_increase_percent = st.number_input("DA Increase after 8th PC (%)", value=3.0)
+        pay_comm_mm_yy = st.text_input("8th Pay Commission Effective Month/Year (MM/YY)", "")
+        new_half_yearly_da_increase_percent = st.number_input("DA Increase after 8th PC (%)", value=3.0, format="%.2f")
 
-    # Promotions appear AFTER CPC
-    num_promotions = st.number_input("How many promotions?", step=1, min_value=0, max_value=5)
+    # Promotions after CPC
+    num_promotions = int(st.number_input("How many promotions?", step=1.0, min_value=0.0, max_value=5.0, value=0.0, format="%.0f"))
     promotions = []
     for i in range(num_promotions):
         col1, col2 = st.columns([2, 2])
@@ -108,7 +110,7 @@ if submitted:
             promo_events.append((promo_date, base_basic))
 
         current_date = start_date
-        current_da_percent = (da_amount / basic_salary) * 100
+        current_da_percent = (da_amount / basic_salary) * 100 if basic_salary else 0
         first_year = start_date.year
         july_da_applied = False
         emp_total = govt_total = nps_total = 0
@@ -201,9 +203,9 @@ if submitted:
         log(f"💰 Total Lump Sum: {format_inr(nps_lump + gratuity + leave_encash)}")
 
         log("\n🟢 Tax-Free Components")
-        log("NPS Lump Sum: Section 10(12A)")
-        log("Gratuity: Section 10(10)(iii)")
-        log("Leave Encashment: Section 10(10AA)(i)")
+        log("✅ NPS Lump Sum: Section 10(12A) – Exempt from tax")
+        log("✅ Gratuity: Section 10(10)(iii) – Exempt from tax")
+        log("✅ Leave Encashment: Section 10(10AA)(i) – Exempt from tax")
 
         log("\n📆 Month-wise Salary Table:")
         tabulated_text = tabulate(
@@ -215,7 +217,7 @@ if submitted:
         log(tabulated_text)
 
         result_text = output.getvalue()
-        st.code(result_text)  # Use monospaced formatting
+        st.code(result_text)  # monospaced display
         st.download_button(
             label="📥 Download Result as .txt",
             data=result_text,
